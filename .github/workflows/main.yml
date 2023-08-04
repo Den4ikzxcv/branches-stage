@@ -1,0 +1,84 @@
+name: LBOARD API - Production
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  # build:
+    # runs-on: ubuntu-latest
+
+    # steps:
+      # - uses: actions/checkout@v2
+
+      # - name: Set up .NET Core
+        # uses: actions/setup-dotnet@v1
+        # with:
+          # dotnet-version: '7.*.*'
+
+      # - name: Build
+        # run: |
+          # dotnet nuget update source githublogity -u ${{ github.actor }} -p ${{ secrets.READ_GH_PACKAGES_PAT }} --store-password-in-clear-text
+          # dotnet build LoadBoard/LoadBoard/*.csproj --configuration Release
+        
+      # - name: Publish with dotnet
+        # run: dotnet publish LoadBoard/LoadBoard/*.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
+
+      # - name: Upload artifact for deployment job
+        # uses: actions/upload-artifact@v2
+        # with:
+          # name: .net-app
+          # path: ${{env.DOTNET_ROOT}}/myapp
+
+  # deploy:
+    # runs-on: ubuntu-latest
+    # needs: build
+    # environment:
+      # name: 'Production'
+      # url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    # steps:
+      # - name: Download artifact from build job
+        # uses: actions/download-artifact@v2
+        # with:
+          # name: .net-app
+
+      # - name: Deploy to Azure Web App
+        # id: deploy-to-webapp
+        # uses: azure/webapps-deploy@v2
+        # with:
+          # app-name: 'lboard-api-server'
+          # slot-name: 'Production'
+          # publish-profile: ${{ secrets.AZURE_APP_SERVICE_PUBLISH_PROFILE_PROD }}
+          # package: '.'
+  
+  slackNotification:
+    name: Slack Notification
+    runs-on: ubuntu-latest
+    env:
+      SLACK_WEBHOOK: ${{ secrets.SLACK_DEPLOY_WEBHOOK }}
+      SLACK_TITLE: GitHub Deployment PROD
+      DEPLOYMENT_STATE: ${{ github.event.deployment_status.state }}
+      DEPLOYMENT_ENV: ${{ github.event.deployment.environment }}
+      SLACK_MESSAGE: Deployment ${DEPLOYMENT_STATE} :hourglass: in *env* -- test config
+      SLACK_COLOR: good
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set the pending message
+        if: github.event.deployment_status.state == 'pending'
+        run: |
+            echo "SLACK_MESSAGE=Deployment ${DEPLOYMENT_STATE} :hourglass: in ${DEPLOYMENT_ENV}" >> $GITHUB_ENV
+            echo "SLACK_COLOR=warning" >> $GITHUB_ENV
+      - name: Set the success message
+        if: github.event.deployment_status.state == 'success'
+        run: |
+            echo "SLACK_MESSAGE=Deployment ${DEPLOYMENT_STATE} :rocket: in ${DEPLOYMENT_ENV}" >> $GITHUB_ENV
+            echo "SLACK_COLOR=good" >> $GITHUB_ENV
+      - name: Set the error message
+        if: github.event.deployment_status.state == 'failure' || github.event.deployment_status.state == 'error'
+        run: |
+            echo "SLACK_MESSAGE=Deployment ${DEPLOYMENT_STATE} :sadpanda: in ${DEPLOYMENT_ENV}" >> $GITHUB_ENV
+            echo "SLACK_COLOR=danger" >> $GITHUB_ENV
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
