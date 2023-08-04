@@ -61,7 +61,7 @@ jobs:
       SLACK_TITLE: GitHub Deployment PROD
       DEPLOYMENT_STATE: ${{ github.event.deployment_status.state }}
       DEPLOYMENT_ENV: ${{ github.event.deployment.environment }}
-      SLACK_MESSAGE: Deployment ${DEPLOYMENT_STATE} :hourglass: in *env* -- test config
+      SLACK_MESSAGE: Deployment state :hourglass: in *env* -- test config
       SLACK_COLOR: good
     steps:
       - uses: actions/checkout@v2
