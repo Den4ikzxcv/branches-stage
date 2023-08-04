@@ -54,6 +54,8 @@ jobs:
           # package: '.'
   
   deploy:
+    name: Fake deploy
+    runs-on: ubuntu-latest
     steps:
       - name: Deploy to Azure Web App
         run: exit 1
