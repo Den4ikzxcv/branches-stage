@@ -53,16 +53,21 @@ jobs:
           # publish-profile: ${{ secrets.AZURE_APP_SERVICE_PUBLISH_PROFILE_PROD }}
           # package: '.'
   
+  deploy:
+    steps:
+      - name: Deploy to Azure Web App
+        run: exit 1
+  
+  
   slackNotification:
     name: Slack Notification
     runs-on: ubuntu-latest
+    needs: deploy
     env:
       SLACK_WEBHOOK: ${{ secrets.SLACK_DEPLOY_WEBHOOK }}
       SLACK_TITLE: GitHub Deployment PROD
       DEPLOYMENT_STATE: ${{ github.event.deployment_status.state }}
       DEPLOYMENT_ENV: ${{ github.event.deployment.environment }}
-      SLACK_MESSAGE: Deployment state is
-      SLACK_COLOR: good
     steps:
       - uses: actions/checkout@v2
       - name: Set the pending message
